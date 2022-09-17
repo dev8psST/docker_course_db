@@ -1,0 +1,52 @@
+version: "3.3"
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    env_file:
+      - .env_file
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - db_nw
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./adm.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - web_nw
+    depends_on:
+      - db
+      - adminer
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - db_nw
+      - web_nw
+    depends_on:
+      - db
+
+
+networks:
+  db_nw:
+   external:
+      name: db_nw
+  web_nw:
+   external:
+      name: web_nw
+volumes:
+  db:
+    driver: local
+  nginx:
+    driver: local
